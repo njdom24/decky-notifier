@@ -2,6 +2,8 @@ import os
 import asyncio
 from asyncio import QueueEmpty
 import subprocess
+import base64
+import mimetypes
 
 # The decky plugin module is located at decky-loader/plugin
 # For easy intellisense checkout the decky-loader code one directory up
@@ -43,8 +45,6 @@ async def subprocess_async():
                 decky_plugin.logger.info("Error:", buf.decode())
                 await asyncio.sleep(5)
                 break
-
-            decky_plugin.logger.info("Something:", buf.decode())
             
             if buf.decode() == '   string "notify-send"\n':
                 await proc.stdout.readline() # Throw away
@@ -52,11 +52,21 @@ async def subprocess_async():
                 summary = (await proc.stdout.readline()).decode().strip()[8:-1]
                 body = (await proc.stdout.readline()).decode().strip()[8:-1]
 
-                await notif_queue.put({
-                    "summary": summary,
-                    "body": body,
-                    "icon": icon
-                })
+                if icon and os.path.isfile(icon):
+                    with open(icon, "rb") as image_file:
+                        mime, _ = mimetypes.guess_type(icon)
+                        if mime:
+                            data = f"data:{mime};base64,{base64.b64encode(image_file.read()).decode()}"
+                            await notif_queue.put({
+                                "summary": summary,
+                                "body": body,
+                                "icon": data
+                        })
+                else:
+                    await notif_queue.put({
+                        "summary": summary,
+                        "body": body,
+                    })
         decky_plugin.logger.info("Dead")
 
 class Plugin:
