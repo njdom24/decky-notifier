@@ -11,7 +11,7 @@ import {
   showContextMenu,
   staticClasses,
 } from "decky-frontend-lib";
-import { VFC } from "react";
+import { VFC, useEffect, useState } from "react";
 import { FaShip } from "react-icons/fa";
 
 import logo from "../assets/logo.png";
@@ -44,7 +44,13 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({serverAPI}) => {
           layout="below"
           onClick={(e) =>
             showContextMenu(
-              <Menu label="Menu" cancelText="CAAAANCEL" onCancel={() => {}}>
+              <Menu label="Menu" cancelText="CAAAANCEL" onCancel={() => {
+                DeckyPluginLoader.toaster.toast({
+                  title: "Summary",
+                  body: "Body",
+                  //logo: logo
+                })
+              }}>
                 <MenuItem onSelected={() => {}}>Item #1</MenuItem>
                 <MenuItem onSelected={() => {}}>Item #2</MenuItem>
                 <MenuItem onSelected={() => {}}>Item #3</MenuItem>
@@ -94,11 +100,65 @@ export default definePlugin((serverApi: ServerAPI) => {
     exact: true,
   });
 
+  const getEvent = async () => {
+    return await serverApi.callPluginMethod<any, any>("get_notification", {});
+  }
+
+  let interval = setInterval(async () => {
+    let data = await getEvent();
+    if(!data.result) return;
+
+    let event = data.result;
+
+    console.log(event)
+
+    let logo = null;
+    if(event.icon) {
+      logo = <img style={{height: "100%"}} src={event.icon}/>;
+    }
+
+    DeckyPluginLoader.toaster.toast({
+      title: event.summary,
+      body: event.body,
+      logo: logo
+    })
+
+    /*
+    if(event.event === "pair") {
+      DeckyPluginLoader.toaster.toast({
+        title: "Pairing " + event.deviceName + ", key: " + event.verificationKey,
+        duration: 15_000,
+        body: <a href="#" onClick={async (e) => {
+          e.persist()
+          await serverApi.callPluginMethod("trust_device", {device_id: event.deviceId})
+          e.target.outerHTML = "Accepted";
+          e.target.onClick = null;
+        }}>Click to accept</a>
+      })
+      return;
+    }
+
+    if(event.event === "notification") {
+      let logo = null;
+      if(event.icon) {
+        logo = <img style={{height: "100%"}} src={event.icon}/>;
+      }
+      DeckyPluginLoader.toaster.toast({
+        title: event.title,
+        body: event.body,
+        logo: logo
+      })
+      return;
+    }
+    */
+  }, 1000)
+
   return {
-    title: <div className={staticClasses.Title}>Example Plugin</div>,
+    title: <div className={staticClasses.Title}>Decky Notifier</div>,
     content: <Content serverAPI={serverApi} />,
     icon: <FaShip />,
     onDismount() {
+      clearInterval(interval);
       serverApi.routerHook.removeRoute("/decky-plugin-test");
     },
   };
