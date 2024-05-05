@@ -112,15 +112,15 @@ export default definePlugin((serverApi: ServerAPI) => {
 
     console.log(event)
 
-    let logo = null;
+    let icon = null;
     if(event.icon) {
-      logo = <img style={{height: "100%"}} src={event.icon}/>;
+      icon = <img style={{height: "100%"}} src={event.icon}/>;
     }
 
     DeckyPluginLoader.toaster.toast({
       title: event.summary,
       body: event.body,
-      logo: logo
+      logo: icon
     })
 
     /*

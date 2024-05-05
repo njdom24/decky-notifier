@@ -19,9 +19,9 @@ def execute(cmd):
     if return_code:
         raise subprocess.CalledProcessError(return_code, cmd)
 
-async def subprocess_async(**kwargs):
-    clear_env = os.environ
-    clear_env["DBUS_SESSION_BUS_ADDRESS"] = "unix:path=/run/user/1000/bus"
+async def subprocess_async():
+    env = os.environ
+    env["DBUS_SESSION_BUS_ADDRESS"] = f'unix:path=/run/user/{os.getuid()}/bus'
     while True:
         decky_plugin.logger.info("Starting async subprocess")
         cmd_list = ["dbus-monitor", "--session", "interface=org.freedesktop.Notifications"]
@@ -29,9 +29,7 @@ async def subprocess_async(**kwargs):
             *cmd_list,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            env=clear_env)
-
-        decky_plugin.logger.info("Procdone")
+            env=env)
 
         while proc.returncode is None:
             decky_plugin.logger.info("Waiting to read")
