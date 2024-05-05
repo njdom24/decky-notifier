@@ -34,9 +34,9 @@ async def subprocess_async():
             env=env)
 
         while proc.returncode is None:
-            decky_plugin.logger.info("Waiting to read")
+            #decky_plugin.logger.info("Waiting to read")
             buf = await proc.stdout.readline()
-            decky_plugin.logger.info("Read")
+            #decky_plugin.logger.info("Read")
             if not buf:
                 decky_plugin.logger.info("Breaking")
                 buf = await proc.stderr.readline()
